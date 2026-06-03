@@ -1,0 +1,32 @@
+services:
+
+  nginx:
+    image: nginx:latest
+    container_name: tokyo-nginx
+
+    env_file:
+      - .env
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template
+      - cache-data:/var/cache/nginx
+
+    restart: unless-stopped
+
+  worker:
+    build: ./worker
+    container_name: tokyo-worker
+
+    env_file:
+      - .env
+
+    volumes:
+      - cache-data:/var/cache/nginx
+
+    restart: unless-stopped
+
+volumes:
+  cache-data:
