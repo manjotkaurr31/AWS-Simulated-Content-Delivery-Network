@@ -1,6 +1,8 @@
 name: Deploy Origin API
 
 on:
+  workflow_dispatch:
+  
   push:
     branches:
       - main
