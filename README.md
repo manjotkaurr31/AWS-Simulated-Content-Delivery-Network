@@ -41,7 +41,7 @@ The system consists of:
 
 ## Architecture
 
-<img src="./screenshots/architecture.png" width="200">
+<img src="./screenshots/architecture.png" width="1000">
 
 ### Request Flow
 
