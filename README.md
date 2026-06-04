@@ -41,8 +41,7 @@ The system consists of:
 
 ## Architecture
 
-<!-- INSERT: Full architecture diagram screenshot here -->
-<!-- Suggested image: A hand-drawn or tool-generated diagram showing the full stack from Route53 → Edge → Regional → ALB → ECS Origin, and the SNS/SQS fan-out invalidation path -->
+<img src="./screenshots/architecture.png" width="200">
 
 ### Request Flow
 
@@ -318,3 +317,5 @@ Edge and regional caches are EC2-based and not included in the automated pipelin
 - **Cache stampede protection** — Add request coalescing at the regional cache to prevent thundering herd on cold cache
 
 ---
+
+Lastly, take a look at `Demonstration.md` to understand **project implementation** and **CDN mechanism** better!
