@@ -1,6 +1,6 @@
 # Multi-Region CDN with Event-Driven Cache Invalidation on AWS
 
-> A production-grade, simulated Content Delivery Network built entirely on AWS — featuring multi-layer caching, latency-based routing, containerized microservices, and fully automated cache invalidation via SNS/SQS fan-out.
+A production-grade, simulated Content Delivery Network built entirely on AWS — featuring multi-layer caching, latency-based routing, containerized microservices, and fully automated cache invalidation via SNS/SQS fan-out.
 
 ---
 
