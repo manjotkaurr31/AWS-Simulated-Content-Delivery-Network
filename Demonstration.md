@@ -2,10 +2,9 @@
 
 ### Route53 Latency-Based Routing
 
-Route53 hosted zone `mk31.in` configured with two A records — `edge1` (13.212.139.70) and `edge2` (13.115.254.210) — using latency-based routing pointed at the Asia Pacific region. Requests resolve to the nearest edge based on network latency.
+Route53 hosted zone `mk31.in` configured with two A records — `edge1` (`<TOKYO_PUBLIC_IP>`) and `edge2` (`<SINGAPORE_PUBLIC_IP>`) — using latency-based routing pointed at the Asia Pacific region. Requests resolve to the nearest edge based on network latency.
 
-<!-- INSERT SCREENSHOT: Route53 hosted zone showing mk31.in with A records (edge1 and edge2), NS, and SOA records -->
-![Route53 Latency Routing](./screenshots/route53.png)
+<img src="./screenshots/route53.png" alt="Route53 hosted zone showing mk31.in with A records (edge1 and edge2), NS, and SOA records" width="800"/>
 
 ---
 
@@ -16,17 +15,15 @@ Two Fargate services running in the `cdn` cluster, both active with 1/1 tasks ru
 - `origin-api-service` — the FastAPI origin server
 - `invalidation-service-service` — the SQS consumer / SNS publisher
 
-<!-- INSERT SCREENSHOT: ECS cluster showing 2 active services, 2 running tasks -->
-![ECS Cluster](./screenshots/ecs_cluster.png)
+<img src="./screenshots/ecs_cluster.png" alt="ECS cluster showing 2 active services, 2 running tasks" width="800"/>
 
 ---
 
 ### Application Load Balancer
 
-`alb-sits-before-origin` — internet-facing ALB in `ap-south-1`, routing `HTTP:8000` traffic to the `origin-alb-tg` target group. Target `172.31.5.244:8000` is **Healthy**.
+`alb-sits-before-origin` — internet-facing ALB in `ap-south-1`, routing `HTTP:8000` traffic to the `origin-alb-tg` target group. Target `<ORIGIN_TASK_PRIVATE_IP>:8000` is **Healthy**.
 
-<!-- INSERT SCREENSHOT: ALB resource map showing listener → target group → healthy ECS task target -->
-![ALB Resource Map](./screenshots/alb.png)
+<img src="./screenshots/alb.png" alt="ALB resource map showing listener to target group to healthy ECS task target" width="800"/>
 
 ---
 
@@ -34,13 +31,11 @@ Two Fargate services running in the `cdn` cluster, both active with 1/1 tasks ru
 
 **origin-api** — 2 images stored, `latest` pushed by the CI pipeline on June 4, 2026.
 
-<!-- INSERT SCREENSHOT: ECR origin-api repository showing 2 images with latest tag -->
-![ECR Origin API](./screenshots/ecr_origin.png)
+<img src="./screenshots/ecr_origin.png" alt="ECR origin-api repository showing 2 images with latest tag" width="800"/>
 
 **invalidation-service** — 3 images stored, `latest` is the most recently deployed version.
 
-<!-- INSERT SCREENSHOT: ECR invalidation-service repository showing 3 images -->
-![ECR Invalidation Service](./screenshots/ecr_invalidation.png)
+<img src="./screenshots/ecr_invalidation.png" alt="ECR invalidation-service repository showing 3 images" width="800"/>
 
 ---
 
@@ -48,8 +43,7 @@ Two Fargate services running in the `cdn` cluster, both active with 1/1 tasks ru
 
 Both workflows completed successfully. `Deploy Origin API` ran in 38s, `Deploy Invalidation Service` ran in 37s.
 
-<!-- INSERT SCREENSHOT: GitHub Actions showing 2 completed workflow runs -->
-![GitHub Actions](./screenshots/github_actions.png)
+<img src="./screenshots/github_actions.png" alt="GitHub Actions showing 2 completed workflow runs" width="800"/>
 
 ---
 
@@ -57,14 +51,13 @@ Both workflows completed successfully. `Deploy Origin API` ran in 38s, `Deploy I
 
 Confirming nginx is running and serving on the edge/regional cache nodes.
 
-<!-- INSERT SCREENSHOT: nginx welcome page -->
-![nginx Running](./screenshots/nginx.png)
+<img src="./screenshots/nginx.png" alt="nginx welcome page confirming server is active" width="800"/>
 
 ---
 
 ### Edge Cache Nodes — Docker ps
 
-**Tokyo edge:**
+**Tokyo edge (`<TOKYO_PUBLIC_IP>`):**
 
 ```
 CONTAINER ID   IMAGE                    NAMES
@@ -72,7 +65,9 @@ CONTAINER ID   IMAGE                    NAMES
 5021491cdfc4   edge_cache_tokyo-worker  tokyo-worker
 ```
 
-**Singapore edge:**
+<img src="./screenshots/docker_ps_tokyo.png" alt="docker ps output from Tokyo edge node showing nginx and worker containers running" width="800"/>
+
+**Singapore edge (`<SINGAPORE_PUBLIC_IP>`):**
 
 ```
 CONTAINER ID   IMAGE                        NAMES
@@ -80,7 +75,9 @@ ebc3efe8f67f   nginx:latest                 singapore-nginx
 82a0d88f3b3c   edge_cache_singapore-worker  singapore-worker
 ```
 
-**Regional cache:**
+<img src="./screenshots/docker_ps_singapore.png" alt="docker ps output from Singapore edge node showing nginx and worker containers running" width="800"/>
+
+**Regional cache (`<REGIONAL_PRIVATE_IP>`):**
 
 ```
 CONTAINER ID   IMAGE                    NAMES
@@ -88,18 +85,15 @@ CONTAINER ID   IMAGE                    NAMES
 1c9b611665ce   regional-cache-worker    regional-worker
 ```
 
-<!-- INSERT SCREENSHOT: docker ps output from regional cache node -->
-<!-- INSERT SCREENSHOT: docker ps output from Tokyo edge node -->
-<!-- INSERT SCREENSHOT: docker ps output from Singapore edge node -->
+<img src="./screenshots/docker_ps_regional.png" alt="docker ps output from regional cache node showing nginx and worker containers running" width="800"/>
 
 ---
 
 ### Origin API — Swagger UI
 
-The Origin API exposes a Swagger UI at `/docs`, reachable via the ALB DNS name on port 8000.
+The Origin API exposes a Swagger UI at `/docs`, reachable via the ALB DNS name (`<ALB_DNS_NAME>`) on port 8000.
 
-<!-- INSERT SCREENSHOT: Swagger UI showing all endpoints -->
-![Origin API Swagger](./screenshots/swagger.png)
+<img src="./screenshots/swagger.png" alt="Swagger UI showing all Origin API endpoints including GET /files, POST /files/upload, DELETE /files/filename" width="800"/>
 
 ---
 
@@ -115,8 +109,7 @@ A file `later.txt` was uploaded using `POST /files/upload`. The API returned:
 }
 ```
 
-<!-- INSERT SCREENSHOT: Swagger POST /files/upload with 200 response -->
-![File Upload](./screenshots/upload.png)
+<img src="./screenshots/upload.png" alt="Swagger UI POST /files/upload showing 200 response with uploaded message" width="800"/>
 
 ---
 
@@ -126,17 +119,16 @@ First request: `X-Regional-Cache: MISS` — cache cold, proxied to origin.
 Second request: `X-Regional-Cache: HIT` — served from regional nginx cache.
 
 ```bash
-$ curl -I http://localhost/files/later.txt
+ubuntu@<REGIONAL_PRIVATE_IP>:~/regional-cache/worker$ curl -I http://localhost/files/later.txt
 X-Layer: Regional
 X-Regional-Cache: MISS
 
-$ curl -I http://localhost/files/later.txt
+ubuntu@<REGIONAL_PRIVATE_IP>:~/regional-cache/worker$ curl -I http://localhost/files/later.txt
 X-Layer: Regional
 X-Regional-Cache: HIT
 ```
 
-<!-- INSERT SCREENSHOT: terminal showing regional cache MISS then HIT headers -->
-![Regional Cache HIT MISS](./screenshots/regional_cache.png)
+<img src="./screenshots/regional_cache.png" alt="Terminal showing two curl requests to regional cache — first returns MISS, second returns HIT" width="800"/>
 
 ---
 
@@ -146,21 +138,20 @@ First request through `mk31.in` resolved to Tokyo edge: regional cache was warm 
 Second request: Tokyo edge now serves from its own local cache (`X-Edge-Cache: HIT`).
 
 ```bash
-$ curl -I http://mk31.in/files/later.txt
+ubuntu@<TOKYO_PRIVATE_IP>:~/edge_cache_tokyo$ curl -I http://mk31.in/files/later.txt
 X-Layer: Regional
 X-Regional-Cache: HIT
 X-Layer: Tokyo
 X-Edge-Cache: MISS
 
-$ curl -I http://mk31.in/files/later.txt
+ubuntu@<TOKYO_PRIVATE_IP>:~/edge_cache_tokyo$ curl -I http://mk31.in/files/later.txt
 X-Layer: Regional
 X-Regional-Cache: HIT
 X-Layer: Tokyo
 X-Edge-Cache: HIT
 ```
 
-<!-- INSERT SCREENSHOT: terminal showing Tokyo edge MISS then HIT -->
-![Tokyo Edge Cache](./screenshots/tokyo_cache.png)
+<img src="./screenshots/tokyo_cache.png" alt="Terminal showing two curl requests to mk31.in from Tokyo edge — first returns edge MISS, second returns edge HIT" width="800"/>
 
 ---
 
@@ -169,21 +160,20 @@ X-Edge-Cache: HIT
 Singapore edge demonstrated independent caching for `yayaya.txt`. Regional cache was cold (MISS) on first request; Singapore edge cached it locally and returned HIT on second.
 
 ```bash
-$ curl -I http://mk31.in/files/yayaya.txt
+ubuntu@<SINGAPORE_PRIVATE_IP>:~/edge_cache_singapore$ curl -I http://mk31.in/files/yayaya.txt
 X-Layer: Regional
 X-Regional-Cache: MISS
 X-Layer: Singapore
 X-Singapore-Cache: MISS
 
-$ curl -I http://mk31.in/files/yayaya.txt
+ubuntu@<SINGAPORE_PRIVATE_IP>:~/edge_cache_singapore$ curl -I http://mk31.in/files/yayaya.txt
 X-Layer: Regional
 X-Regional-Cache: MISS
 X-Layer: Singapore
 X-Singapore-Cache: HIT
 ```
 
-<!-- INSERT SCREENSHOT: terminal showing Singapore edge MISS then HIT -->
-![Singapore Edge Cache](./screenshots/singapore_cache.png)
+<img src="./screenshots/singapore_cache.png" alt="Terminal showing two curl requests to mk31.in from Singapore edge — first returns Singapore MISS, second returns Singapore HIT" width="800"/>
 
 ---
 
@@ -198,26 +188,25 @@ File `no.txt` was deleted via `DELETE /files/no.txt` through the Origin API Swag
 }
 ```
 
+<img src="./screenshots/delete.png" alt="Swagger UI DELETE /files/no.txt showing 200 response with deleted message" width="800"/>
+
 Following the delete, the regional cache correctly returns `404 Not Found` on both the first and second requests — confirming the invalidation worker processed the SQS message and purged the file from nginx cache.
 
 ```bash
-$ curl -I http://localhost/files/no.txt
+ubuntu@<REGIONAL_PRIVATE_IP>:~/regional-cache/worker$ curl -I http://localhost/files/no.txt
 HTTP/1.1 404 Not Found
 X-Layer: Regional
 X-Regional-Cache: MISS
 
-$ curl -I http://localhost/files/no.txt
+ubuntu@<REGIONAL_PRIVATE_IP>:~/regional-cache/worker$ curl -I http://localhost/files/no.txt
 HTTP/1.1 404 Not Found
 X-Layer: Regional
 X-Regional-Cache: MISS
 ```
 
-Note: 404 responses are intentionally not cached — every request for a deleted file hits upstream to confirm the file is truly gone.
+<img src="./screenshots/post_delete_404.png" alt="Terminal showing regional cache returning 404 Not Found for no.txt after invalidation, on both requests" width="800"/>
 
-<!-- INSERT SCREENSHOT: Swagger DELETE /files/no.txt showing 200 deleted response -->
-<!-- INSERT SCREENSHOT: terminal showing regional cache returning 404 after invalidation -->
-![Cache Invalidation Delete](./screenshots/delete.png)
-![Post-Delete 404](./screenshots/post_delete_404.png)
+> **Note:** 404 responses are intentionally not cached — every request for a deleted file hits upstream to confirm the file is truly gone.
 
 ---
 
@@ -232,8 +221,7 @@ Deleted from queue
 Polling...
 ```
 
-<!-- INSERT SCREENSHOT: ECS task logs for invalidation-service-container showing the FILE_DELETED event -->
-![Invalidation Service Logs](./screenshots/invalidation_logs.png)
+<img src="./screenshots/invalidation_logs.png" alt="ECS CloudWatch logs for invalidation-service-container showing FILE_DELETED event received, published to SNS, and deleted from queue" width="800"/>
 
 ---
 
@@ -242,13 +230,10 @@ Polling...
 Origin API ECS container logs confirm the DELETE request was received and processed:
 
 ```
-INFO: DELETE /files/no.txt HTTP/1.1  200 OK
-INFO: GET /files/no.txt HTTP/1.1     404 Not Found
+INFO: <ALB_HEALTH_CHECKER_IP> - "DELETE /files/no.txt HTTP/1.1" 200 OK
+INFO: <ALB_HEALTH_CHECKER_IP> - "GET /files/no.txt HTTP/1.1" 404 Not Found
 ```
 
 Health checks from the ALB (`GET /health`) are visible throughout, confirming the target remains healthy.
 
-<!-- INSERT SCREENSHOT: ECS task logs for origin-api container showing DELETE and subsequent 404 GETs -->
-![Origin API Logs](./screenshots/origin_logs.png)
-
----
+<img src="./screenshots/origin_logs.png" alt="ECS CloudWatch logs for origin-api container showing DELETE 200 and subsequent GET 404 for no.txt alongside ALB health checks" width="800"/>
